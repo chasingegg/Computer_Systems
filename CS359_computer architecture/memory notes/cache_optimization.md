@@ -48,7 +48,7 @@ if we use cache with virtual address, the time for address translation is saved.
 **get the best of both virtual and physical caches**  
 overlapping the *access* with the *TLB access*  
 - high order bits of VA to access the TLB  
-- the low order bits are used as index into cache
+- the low order bits are used as index into cache  
 use page offset to index the cache(page offset is not used for address translation)
 
 

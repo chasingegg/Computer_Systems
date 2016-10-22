@@ -25,7 +25,7 @@
   
 
 ##**measuring memory hierarchy performance**
-average memory access time = hit time + miss rate * miss penalty
+average memory access time = hit time + miss rate * miss penalty  
 CPU time = (CPU execution clock cycles + memory stall clock cycles) * cycle time
 
 ##virtual memory
