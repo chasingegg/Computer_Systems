@@ -58,7 +58,7 @@ In the parallelized version, we cannot insure every time we call this function i
 When there is no vertex found in the processor, the function returns -1 as a flag. And the corresponding adjustment to `my_min[ ]` is:
 		loc_u = Find_min_dist(loc_dist, loc_known, loc_n);
 		my_min[0] = loc_u == -1 ? INFINITY : loc_dist[loc_u];
-		my_min[1] = global_vertex(loc_u);
+		my_min[1] = global_vertex(loc_u);  
 2.  The same Bug comes from the **magic number** in a loop-head.
 ```
         for (v = 1; v < n; v++) 
