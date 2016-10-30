@@ -66,10 +66,10 @@ for (i = my_first_row; i <= my_last_row; i++) {
 Modified version:  
 
 ```
-for (i = 0; i < local_m; i++) {
-      local_y[i] = 0.0;
+for (i = my_first_row; i < my_last_row; i++) {
+      local_y[my_first_row - local_m] = 0.0;
       for (j = 0; j < n; j++)
-          local_y[i] += A[(i+my_first_row)*n+j]*x[j];
+          local_y[i - local_m] += A[i*n+j]*x[j];
    }
 
 memcpy(y+my_first_row, local_y, local_m*sizeof(double));
