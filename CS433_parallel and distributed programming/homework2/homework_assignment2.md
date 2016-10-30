@@ -1,4 +1,4 @@
-#homework assignement2
+#homework assignment2
 5142029014 高超  
 
 **4.16**  
