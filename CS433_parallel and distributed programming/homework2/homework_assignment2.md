@@ -67,9 +67,9 @@ Modified version:
 
 ```
 for (i = my_first_row; i < my_last_row; i++) {
-      local_y[my_first_row - local_m] = 0.0;
+      local_y[i - my_first_row] = 0.0;
       for (j = 0; j < n; j++)
-          local_y[i - local_m] += A[i*n+j]*x[j];
+          local_y[i - my_first_row] += A[i*n+j]*x[j];
    }
 
 memcpy(y+my_first_row, local_y, local_m*sizeof(double));
