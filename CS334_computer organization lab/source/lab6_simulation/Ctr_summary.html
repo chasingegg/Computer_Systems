@@ -1,0 +1,90 @@
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date:    08:18:40 03/03/2016 
+// Design Name: 
+// Module Name:    register 
+// Project Name: 
+// Target Devices: 
+// Tool versions: 
+// Description: 
+//
+// Dependencies: 
+//
+// Revision: 
+// Revision 0.01 - File Created
+// Additional Comments: 
+//
+//////////////////////////////////////////////////////////////////////////////////
+module register(Regclock_in,readReg1,readReg2,writeReg,writeData,regWrite,readData1,readData2,rst,switch, PC,led);
+    input Regclock_in;
+    input [25:21] readReg1;
+    input [20:16] readReg2;
+    input [4:0] writeReg;
+    input [31:0] writeData;
+    input regWrite;
+	 input rst;
+	 input [31:0] PC;
+	 input[1:0] switch;
+	 
+    output [31:0] readData1;
+    output [31:0] readData2;
+    output [7:0] led;
+	 
+    reg [31:0] readData1;
+	 reg [31:0] readData2;
+	 reg [7:0] led;
+	 reg [31:0] regFile[15:0];
+	 integer i ;
+	 
+	 initial
+      begin	 
+	   regFile[0] = 32'h00000000;
+		regFile[1] = 32'h00000001;
+		regFile[2] = 32'h00000002;	
+		regFile[3] = 32'h00000003;
+		regFile[4] = 32'h00000004;
+		regFile[5] = 32'h00000005;
+		regFile[6] = 32'h00000006;
+		regFile[7] = 32'h00000007;
+		regFile[8] = 32'h00000008;
+		regFile[9] = 32'h00000009;
+		regFile[10] = 32'h0000000a;
+		regFile[11] = 32'h0000000b;
+		regFile[12] = 32'h0000000c;
+		regFile[13] = 32'h0000000d;
+		regFile[14] = 32'h0000000e;
+		regFile[15] = 32'h0000000f;
+
+		 
+	 	end 
+		
+	 always @( readReg1 or readReg2 or regWrite or writeReg or regWrite)
+	 begin
+	    readData1 = regFile[readReg1];
+		 readData2 = regFile[readReg2];
+		 case(switch)
+		  0:led = PC[7:0];
+		  1:led = regFile[1][7:0];
+		  2:led  = regFile[2][7:0];
+		  3:led = regFile[3][7:0];
+		 endcase
+		 //RegLed[3:0] = regFile[1][3:0];
+		 //RegLed[7:4] = PC[3:0];
+	 end
+	 
+	 always @( negedge Regclock_in)
+	 begin
+		 if (rst)
+		       begin
+		        for (i = 0;i <= 15;i = i + 1)
+				     regFile[i] = 0;
+			    end 
+		 else	 if (regWrite) 
+					regFile[writeReg] = writeData;
+		 
+	 end
+	 
+endmodule

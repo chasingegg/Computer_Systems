@@ -1,0 +1,22 @@
+Running: D:\xi\14.7\ISE_DS\ISE\bin\nt64\unwrapped\fuse.exe -intstyle ise -incremental -lib unisims_ver -lib unimacro_ver -lib xilinxcorelib_ver -o G:/ceshi/lab6.0/test_for_top_isim_beh.exe -prj G:/ceshi/lab6.0/test_for_top_beh.prj work.test_for_top work.glbl 
+ISim P.20131013 (signature 0x7708f090)
+Number of CPUs detected in this system: 4
+Turning on mult-threading, number of parallel sub-compilation jobs: 8 
+Determining compilation order of HDL files
+Analyzing Verilog file "G:/ceshi/lab6.0/signext.v" into library work
+Analyzing Verilog file "G:/ceshi/lab6.0/register.v" into library work
+Analyzing Verilog file "G:/ceshi/lab6.0/data_memory.v" into library work
+Analyzing Verilog file "G:/ceshi/lab6.0/Ctr.v" into library work
+Analyzing Verilog file "G:/ceshi/lab6.0/aluCtr.v" into library work
+Analyzing Verilog file "G:/ceshi/lab6.0/alu.v" into library work
+Analyzing Verilog file "G:/ceshi/lab6.0/Top.v" into library work
+Analyzing Verilog file "G:/ceshi/lab6.0/test_for_top.v" into library work
+Analyzing Verilog file "D:/xi/14.7/ISE_DS/ISE//verilog/src/glbl.v" into library work
+Starting static elaboration
+WARNING:HDLCompiler:267 - "G:/ceshi/lab6.0/test_for_top.v" Line 32: Cannot find port reset on this module
+WARNING:HDLCompiler:267 - "G:/ceshi/lab6.0/Top.v" Line 212: Cannot find port RegLed on this module
+WARNING:HDLCompiler:267 - "G:/ceshi/lab6.0/Top.v" Line 261: Cannot find port Memclock_in on this module
+ERROR:HDLCompiler:25 - "G:/ceshi/lab6.0/test_for_top.v" Line 33: Module <Top> does not have a port named <clk>.
+ERROR:HDLCompiler:25 - "G:/ceshi/lab6.0/test_for_top.v" Line 34: Module <Top> does not have a port named <reset>.
+WARNING:HDLCompiler:1016 - "G:/ceshi/lab6.0/test_for_top.v" Line 32: Port Topclk is not connected to this instance
+ERROR:Simulator:778 - Static elaboration of top level Verilog design unit(s) in library work failed

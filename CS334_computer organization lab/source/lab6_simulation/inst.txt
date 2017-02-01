@@ -1,0 +1,345 @@
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date:    20:56:12 03/30/2016 
+// Design Name: 
+// Module Name:    Top 
+// Project Name: 
+// Target Devices: 
+// Tool versions: 
+// Description: 
+//
+// Dependencies: 
+//
+// Revision: 
+// Revision 0.01 - File Created
+// Additional Comments: 
+//
+//////////////////////////////////////////////////////////////////////////////////
+module timekiller(clockIn,clockOut);
+   input clockIn;
+	output clockOut;
+	reg clockOut;
+	
+	reg[23:0] buffer;
+	
+	always @(posedge clockIn)
+	begin
+	   buffer <= buffer + 1;
+		clockOut <= &buffer;
+	end
+
+endmodule
+
+module Top(inclk,switch,RESET,led); 
+	input inclk;
+	input [1:0] switch;
+   input RESET;
+	output wire [7:0] led;	 	 
+	 
+	reg[31:0] PC;
+	wire clk;
+		
+	timekiller timer(.clockIn(inclk),.clockOut(clk));
+
+	wire [31:0] IF_AddPlus4;
+	wire [31:0] IF_Instruction;
+	wire [31:0] NextPC;
+	 
+	reg [31:0] IF_ID_AddPlus4;
+	reg [31:0] IF_ID_Instruction;
+
+	wire ID_RegDst;
+	wire ID_AluSrc;
+	wire ID_MemToReg;
+	wire ID_RegWrite;
+	wire ID_MemRead;
+	wire ID_MemWrite;
+	wire ID_Branch;
+	wire [1:0] ID_AluOp;	
+	wire [31:0] ID_ReadData1;
+	wire [31:0] ID_ReadData2;
+	wire [31:0] ID_Signext;
+	 
+	reg ID_EX_RegDst;
+	reg ID_EX_AluSrc;
+	reg ID_EX_MemToReg;
+	reg ID_EX_RegWrite;
+	reg ID_EX_MemRead;
+	reg ID_EX_MemWrite;
+	reg ID_EX_Branch;
+	reg [1:0] ID_EX_AluOp;
+	reg [31:0] ID_EX_AddPlus4;
+	reg [31:0] ID_EX_ReadData1;
+	reg [31:0] ID_EX_ReadData2;
+	reg [31:0] ID_EX_Signext;
+	reg [20:16] ID_EX_Inst20_16;
+	reg [15:11] ID_EX_Inst15_11;
+	
+
+	wire [31:0] EX_AddRes;
+	wire [31:0] Mux_IDEX_TO_ALU;
+	wire [5:0] EX_WriteReg;
+	wire EX_Zero;
+	wire [31:0] EX_AluRes;
+	wire [3:0] EX_AluCtr;
+
+	reg EX_MEM_MemToReg;
+	reg EX_MEM_RegWrite;
+	reg EX_MEM_MemRead;
+	reg EX_MEM_MemWrite;
+	reg EX_MEM_Branch;
+	reg [31:0] EX_MEM_AddRes;
+	reg EX_MEM_Zero;
+	reg [31:0] EX_MEM_AluRes;
+	reg [31:0] EX_MEM_ReadData2;
+	reg [4:0] EX_MEM_WriteReg;
+		
+	
+	wire [31:0] MEM_ReadData;
+	wire MEM_PCSrc;
+	 
+	reg [31:0] MEM_WB_ReadData;
+	reg [31:0] MEM_WB_AluRes;
+	reg [4:0] MEM_WB_WriteReg;
+	reg MEM_WB_MemToReg;
+	reg MEM_WB_RegWrite;
+
+
+   wire [31:0] WB_WriteData;
+	 
+
+	assign IF_AddPlus4 = PC + 4;
+	assign NextPC = MEM_PCSrc?EX_MEM_AddRes:IF_AddPlus4;
+  
+	assign EX_AddRes = ID_EX_AddPlus4 + (ID_EX_Signext << 2);
+	assign Mux_IDEX_TO_ALU = ID_EX_AluSrc?ID_EX_Signext:ID_EX_ReadData2;
+	assign EX_WriteReg = ID_EX_RegDst?ID_EX_Inst15_11:ID_EX_Inst20_16;
+  
+	assign MEM_PCSrc = EX_MEM_Branch & EX_MEM_Zero;
+  
+	assign WB_WriteData = MEM_WB_MemToReg?MEM_WB_ReadData:MEM_WB_AluRes; 
+  
+	reg [7:0] IM[0:59];  
+	
+	
+	initial 
+	begin 
+		IM[0] = 8'b10001100;
+		IM[1] = 8'b00000001;
+		IM[2] = 8'b00000000;
+		IM[3] = 8'b00000101; //lw $1, 5($0)    $1 = 5
+	
+		IM[4] = 8'b10001100;
+		IM[5] = 8'b00000101;
+		IM[6] = 8'b00000000;
+		IM[7] = 8'b00000110; //lw $5, 6($0)    $5 = 6
+	
+		IM[8] = 8'b10001100;
+		IM[9] = 8'b00000100;
+		IM[10] = 8'b00000000;
+		IM[11] = 8'b00000010; //lw $4, 2($0)   $4 = 2
+	
+		IM[12] = 8'b00000000;
+		IM[13] = 8'b00000000;
+		IM[14] = 8'b00000000;
+		IM[15] = 8'b00000000; //nop
+	
+		IM[16] = 8'b00000000;
+		IM[17] = 8'b00000000;
+		IM[18] = 8'b00000000;
+		IM[19] = 8'b00000000; //nop
+	
+		IM[20] = 8'b00000000;
+		IM[21] = 8'b00000000;
+		IM[22] = 8'b00000000;
+		IM[23] = 8'b00000000; //nop
+	
+		IM[24] = 8'b00000000;
+		IM[25] = 8'b10000001;
+		IM[26] = 8'b00010000;
+		IM[27] = 8'b00100000; //$2 = $4 + $2   $2 = 7
+	
+		IM[28] = 8'b00000000;
+		IM[29] = 8'b00100100;
+		IM[30] = 8'b00011000;
+		IM[31] = 8'b00100010; //$3 = $1 - $4   $3 = 3
+	
+		IM[32] = 8'b00000000;
+		IM[33] = 8'b10100100;
+		IM[34] = 8'b00001000;
+		IM[35] = 8'b00100100; //$1 = $5 & $4    $1 = 2
+	
+		IM[36] = 8'b00000000;
+		IM[37] = 8'b10100100;
+		IM[38] = 8'b00010000;
+		IM[39] = 8'b00100101; //$2 = $5 | $4     $2 = 6
+	
+		IM[40] = 8'b00000000;
+		IM[41] = 8'b01100101;
+		IM[42] = 8'b00011000;
+		IM[43] = 8'b00101010; //$3 = $3 slt $5     $3 = 1;
+	
+		IM[44] = 8'b00000000;
+		IM[45] = 8'b00000000;
+		IM[46] = 8'b00000000;
+		IM[47] = 8'b00000000; //nop
+	
+		IM[48] = 8'b00000000;
+		IM[49] = 8'b00000000;
+		IM[50] = 8'b00000000;
+		IM[51] = 8'b00000000; //nop
+	
+		IM[52] = 8'b00000000;
+		IM[53] = 8'b00000000;
+		IM[54] = 8'b00000000;
+		IM[55] = 8'b00000000; //nop
+	
+		IM[56] = 8'b00000000;
+		IM[57] = 8'b00100010;
+		IM[58] = 8'b00011000;
+		IM[59] = 8'b00100000; //$3 = $1 + $2  $3 = 8
+end
+
+assign IF_Instruction = {IM[PC],IM[PC+1],IM[PC+2],IM[PC+3]};
+
+    register mainRegsiter(
+								.Regclock_in(clk),
+								.readReg1(IF_ID_Instruction[25:21]),
+								.readReg2(IF_ID_Instruction[20:16]),
+								.writeReg(MEM_WB_WriteReg),
+								.writeData(WB_WriteData),
+								.regWrite(MEM_WB_RegWrite),
+								.readData1(ID_ReadData1),
+								.readData2(ID_ReadData2),
+								.rst(RESET),
+								.led(led),
+								.PC(PC),
+								.switch(switch)
+								);	
+	
+   signext mainSignext(
+							.inst(IF_ID_Instruction[15:0]),
+							.data(ID_Signext)
+	);	
+	
+	Ctr mainCtr(
+				.opCode(IF_ID_Instruction[31:26]),
+				.regDst(ID_RegDst),
+				.aluSrc(ID_AluSrc),
+				.memToReg(ID_MemToReg),
+				.regWrite(ID_RegWrite),
+				.memRead(ID_MemRead),
+				.memWrite(ID_MemWrite),
+				.branch(ID_Branch),
+				.aluOp(ID_AluOp)
+				);
+  
+	aluCtr mainAluCtr(
+						.aluOp(ID_EX_AluOp),
+						.funct(ID_EX_Signext[5:0]),
+						.aluCtr(EX_AluCtr)
+	);
+  
+	alu mainAlu(
+				.input1(ID_EX_ReadData1),
+				.input2(Mux_IDEX_TO_ALU),
+				.aluCtr(EX_AluCtr),
+				.zero(EX_Zero),
+				.aluRes(EX_AluRes)
+  );
+  
+
+
+
+  data_memory mainMemory(
+							.Memclock_in(clk),
+							.address(EX_MEM_AluRes),
+							.writeData(EX_MEM_ReadData2),
+							.memWrite(EX_MEM_MemWrite),
+							.memRead(EX_MEM_MemRead),
+							.readData(MEM_ReadData)
+							); 
+  
+  
+  
+always @(posedge clk)
+begin
+  if (RESET) 
+      begin
+		   PC <= 0;
+		   IF_ID_AddPlus4 <= 0;
+			IF_ID_Instruction <= 0;
+			ID_EX_RegDst <= 0;
+			ID_EX_AluSrc <= 0;
+			ID_EX_MemToReg <= 0;
+			ID_EX_RegWrite <= 0;
+			ID_EX_MemRead <= 0;
+			ID_EX_MemWrite <= 0;
+			ID_EX_Branch <= 0;
+			ID_EX_AluOp <= 0;
+			ID_EX_AddPlus4 <= 0;
+			ID_EX_ReadData1 <= 0;
+			ID_EX_ReadData2 <= 0;
+			ID_EX_Signext <= 0;
+			ID_EX_Inst20_16 <= 0;
+			ID_EX_Inst15_11 <= 0;
+			EX_MEM_MemToReg <= 0;
+			EX_MEM_RegWrite <= 0;
+			EX_MEM_MemRead <= 0;
+			EX_MEM_MemWrite <= 0;
+			EX_MEM_Branch <= 0;
+			EX_MEM_AddRes <= 0;
+			EX_MEM_Zero <= 0;
+			EX_MEM_AluRes <= 0;
+			EX_MEM_ReadData2 <= 0;
+			EX_MEM_WriteReg <= 0;
+			MEM_WB_ReadData <= 0;
+			MEM_WB_AluRes <= 0;
+			MEM_WB_WriteReg <= 0;
+			MEM_WB_MemToReg <= 0;
+			MEM_WB_RegWrite <= 0;
+		end	
+  else	
+	begin
+		PC <= NextPC;
+ 
+		IF_ID_AddPlus4 <= IF_AddPlus4;
+		IF_ID_Instruction <= IF_Instruction;
+		
+		ID_EX_RegDst <= ID_RegDst;
+		ID_EX_AluSrc <= ID_AluSrc;
+		ID_EX_MemToReg <= ID_MemToReg;
+		ID_EX_RegWrite <= ID_RegWrite;
+		ID_EX_MemRead <= ID_MemRead;
+		ID_EX_MemWrite <= ID_MemWrite;
+		ID_EX_Branch <= ID_Branch;
+		ID_EX_AluOp <= ID_AluOp;
+		ID_EX_AddPlus4 <= IF_ID_AddPlus4;
+		ID_EX_ReadData1 <= ID_ReadData1;
+		ID_EX_ReadData2 <= ID_ReadData2;
+		ID_EX_Signext <= ID_Signext;
+		ID_EX_Inst20_16 <= IF_ID_Instruction[20:16];
+		ID_EX_Inst15_11 <= IF_ID_Instruction[15:11];
+	 
+		EX_MEM_MemToReg <= ID_EX_MemToReg;
+		EX_MEM_RegWrite <= ID_EX_RegWrite;
+		EX_MEM_MemRead <= ID_EX_MemRead;
+		EX_MEM_MemWrite <= ID_EX_MemWrite;
+		EX_MEM_Branch <= ID_EX_Branch;
+		EX_MEM_AddRes <= EX_AddRes;
+		EX_MEM_Zero <= EX_Zero;
+		EX_MEM_AluRes <= EX_AluRes;
+		EX_MEM_ReadData2 <= ID_EX_ReadData2;
+		EX_MEM_WriteReg <= EX_WriteReg;
+		
+		MEM_WB_MemToReg <= EX_MEM_MemToReg;
+		MEM_WB_RegWrite <= EX_MEM_RegWrite;
+		MEM_WB_ReadData <= MEM_ReadData;
+		MEM_WB_AluRes <= EX_MEM_AluRes;
+		MEM_WB_WriteReg <= EX_MEM_WriteReg;
+	end 
+end
+endmodule

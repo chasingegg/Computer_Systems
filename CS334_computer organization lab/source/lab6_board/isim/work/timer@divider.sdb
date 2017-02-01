@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- IMPORTANT: This is an internal file that has been generated
+     by the Xilinx ISE software.  Any direct editing or
+     changes made to this file may result in unpredictable
+     behavior or data corruption.  It is strongly advised that
+     users do not edit the contents of this file. -->
+<messages>
+<msg type="warning" file="HDLCompiler" num="267" delta="unknown" >"G:/ceshi/lab6.0/test_for_top.v" Line 32: Cannot find port <arg fmt="%s" index="1">reset</arg> on this module
+</msg>
+
+<msg type="warning" file="HDLCompiler" num="267" delta="unknown" >"G:/ceshi/lab6.0/Top.v" Line 212: Cannot find port <arg fmt="%s" index="1">RegLed</arg> on this module
+</msg>
+
+<msg type="warning" file="HDLCompiler" num="267" delta="unknown" >"G:/ceshi/lab6.0/Top.v" Line 261: Cannot find port <arg fmt="%s" index="1">Memclock_in</arg> on this module
+</msg>
+
+<msg type="error" file="HDLCompiler" num="25" delta="unknown" >"G:/ceshi/lab6.0/test_for_top.v" Line 33: Module &lt;<arg fmt="%s" index="1">Top</arg>&gt; does not have a port named &lt;<arg fmt="%s" index="2">clk</arg>&gt;.
+</msg>
+
+<msg type="error" file="HDLCompiler" num="25" delta="unknown" >"G:/ceshi/lab6.0/test_for_top.v" Line 34: Module &lt;<arg fmt="%s" index="1">Top</arg>&gt; does not have a port named &lt;<arg fmt="%s" index="2">reset</arg>&gt;.
+</msg>
+
+<msg type="warning" file="HDLCompiler" num="1016" delta="unknown" >"G:/ceshi/lab6.0/test_for_top.v" Line 32: Port <arg fmt="%s" index="1">Topclk</arg> is not connected to this instance
+</msg>
+
+<msg type="error" file="Simulator" num="778" delta="unknown" >Static elaboration of top level Verilog design unit(s) in library <arg fmt="%s" index="1">work</arg> failed
+</msg>
+
+</messages>
+

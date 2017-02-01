@@ -1,0 +1,1 @@
+-intstyle "ise" -incremental -lib "unisims_ver" -lib "unimacro_ver" -lib "xilinxcorelib_ver" -o "C:/Users/Dimon/Desktop/lab3_Ctr/test_for_Ctr_isim_beh.exe" -prj "C:/Users/Dimon/Desktop/lab3_Ctr/test_for_Ctr_beh.prj" "work.test_for_Ctr" "work.glbl" 
