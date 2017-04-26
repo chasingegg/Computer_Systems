@@ -34,12 +34,7 @@ public class FileClient{
       dis = new DataInputStream(s.getInputStream());
 
       long len = dis.readLong();
-      //int passedlen = 0;
-      //System.out.println(len);
-      //System.out.println(len+'\n');
-      //System.out.println(len*2 + '\n');
-      //String savepath = "/Users/dimon/Desktop/cv/";
-      //savepath += dis.readUTF();
+
       savepath = original;
       savepath += file;
       System.out.println("file length is " + len + "bytes  save file to " + savepath + '\n');
