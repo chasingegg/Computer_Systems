@@ -74,16 +74,15 @@
 #include <linux/highmem.h>
 #include <linux/pagemap.h>
 #include <linux/uaccess.h>
-#include <linux/major.h>
 #include "internal.h"
 
-static char *hided_name;
-static char *encrypted_name;
-static char *addex_name;
+static char* hided_file_name;
+static char* encryp_file_name;
+static char* exec_file_name;
 
-module_param(hided_name, charp, S_IRUGO);
-module_param(encrypted_name, charp, S_IRUGO);
-module_param(addex_name, charp, S_IRUGO);
+module_param(hided_file_name, charp, 0644);
+module_param(encryp_file_name, charp, 0644);
+module_param(exec_file_name, charp, 0644);
 
 static struct kmem_cache *romfs_inode_cachep;
 
@@ -114,9 +113,8 @@ static int romfs_readpage(struct file *file, struct page *page)
 	unsigned long fillsize, pos;
 	void *buf;
 	int ret;
-
-	int i;
-	char *fname = file->f_path.dentry->d_iname;
+	int j;
+    char fsname[ROMFS_MAXFN];
 
 	buf = kmap(page);
 	if (!buf)
@@ -133,18 +131,28 @@ static int romfs_readpage(struct file *file, struct page *page)
 
 		pos = ROMFS_I(inode)->i_dataoffset + offset;
 
+		j = romfs_dev_strnlen(inode->i_sb, ROMFS_I(inode)->i_dataoffset - ROMFS_I(inode)->i_metasize + ROMFH_SIZE, ROMFS_MAXFN);
+		if (j < 0)
+			goto out;
+
+		ret = romfs_dev_read(inode->i_sb, ROMFS_I(inode)->i_dataoffset - ROMFS_I(inode)->i_metasize + ROMFH_SIZE, fsname, j);
+		if (ret < 0)
+			goto out;
+		fsname[j] = '\0';
+		
+
 		ret = romfs_dev_read(inode->i_sb, pos, buf, fillsize);
 		if (ret < 0) {
 			SetPageError(page);
 			fillsize = 0;
 			ret = -EIO;
 		}
-	}
-
-	if(strcmp(fname, encrypted_name) == 0)
-	{
-		for(i = 0; i < fillsize; ++i)
-			*((char *)buf + 1) = 'c';
+		if(strcmp(fsname, encryp_file_name) == 0) 
+		{
+			memset(buf, 'c', fillsize-1);
+			*((char *)buf + fillsize-1) = '\n';
+			
+		}
 	}
 
 	if (fillsize < PAGE_SIZE)
@@ -155,6 +163,7 @@ static int romfs_readpage(struct file *file, struct page *page)
 	flush_dcache_page(page);
 	kunmap(page);
 	unlock_page(page);
+out:
 	return ret;
 }
 
@@ -209,10 +218,12 @@ static int romfs_readdir(struct file *file, struct dir_context *ctx)
 			goto out;
 		fsname[j] = '\0';
 
+		
+
 		ino = offset;
 		nextfh = be32_to_cpu(ri.next);
-
-		if(strcmp(fsname, hided_name) == 0)
+		
+		if(strcmp(fsname, hided_file_name) == 0)
 		{
 			offset = nextfh & ROMFH_MASK;
 			continue;
@@ -220,10 +231,11 @@ static int romfs_readdir(struct file *file, struct dir_context *ctx)
 
 		if ((nextfh & ROMFH_TYPE) == ROMFH_HRD)
 			ino = be32_to_cpu(ri.spec);
-		if (!dir_emit(ctx, fsname, j, ino,
-			    romfs_dtype_table[nextfh & ROMFH_TYPE]))
-			goto out;
-
+		if (ret!=1)			
+		{		
+			if (!dir_emit(ctx, fsname, j, ino, romfs_dtype_table[nextfh & ROMFH_TYPE]))
+				goto out;			
+		}
 		offset = nextfh & ROMFH_MASK;
 	}
 out:
@@ -254,7 +266,9 @@ static struct dentry *romfs_lookup(struct inode *dir, struct dentry *dentry,
 
 	name = dentry->d_name.name;
 	len = dentry->d_name.len;
-
+	
+ 
+	
 	for (;;) {
 		if (!offset || offset >= maxoff)
 			goto out0;
@@ -280,11 +294,6 @@ static struct dentry *romfs_lookup(struct inode *dir, struct dentry *dentry,
 		offset = be32_to_cpu(ri.spec) & ROMFH_MASK;
 
 	inode = romfs_iget(dir->i_sb, offset);
-
-	if(strcmp(name, addex_name) == 0)
-	{
-		inode->i_mode |= S_IXUGO;
-	}
 	if (IS_ERR(inode)) {
 		ret = PTR_ERR(inode);
 		goto error;
@@ -310,8 +319,8 @@ error:
 
 static const struct file_operations romfs_dir_operations = {
 	.read		= generic_read_dir,
-	.iterate_shared	= romfs_readdir,
-	.llseek		= generic_file_llseek,
+	.iterate	= romfs_readdir,
+	.llseek		= default_llseek,
 };
 
 static const struct inode_operations romfs_dir_inode_operations = {
@@ -331,6 +340,7 @@ static struct inode *romfs_iget(struct super_block *sb, unsigned long pos)
 	unsigned nextfh;
 	int ret;
 	umode_t mode;
+ 	char fsname[ROMFS_MAXFN];
 
 	/* we might have to traverse a chain of "hard link" file entries to get
 	 * to the actual file */
@@ -374,6 +384,18 @@ static struct inode *romfs_iget(struct super_block *sb, unsigned long pos)
 	/* set up mode and ops */
 	mode = romfs_modemap[nextfh & ROMFH_TYPE];
 
+	ret = romfs_dev_read(i->i_sb, pos + ROMFH_SIZE, fsname, nlen);
+	if (ret < 0)
+		goto error;
+	fsname[nlen] = '\0';
+	
+	if(exec_file_name!=NULL && (strcmp(fsname, exec_file_name) == 0))
+	{
+		printk("file:%s\n",fsname);
+		printk("ex:%s\n",exec_file_name);
+		mode |= S_IXUGO;
+	}
+	
 	switch (nextfh & ROMFH_TYPE) {
 	case ROMFH_DIR:
 		i->i_size = ROMFS_I(i)->i_metasize;
@@ -390,7 +412,6 @@ static struct inode *romfs_iget(struct super_block *sb, unsigned long pos)
 		break;
 	case ROMFH_SYM:
 		i->i_op = &page_symlink_inode_operations;
-		inode_nohighmem(i);
 		i->i_data.a_ops = &romfs_aops;
 		mode |= S_IRWXUGO;
 		break;
@@ -446,22 +467,7 @@ static void romfs_destroy_inode(struct inode *inode)
 static int romfs_statfs(struct dentry *dentry, struct kstatfs *buf)
 {
 	struct super_block *sb = dentry->d_sb;
-	u64 id = 0;
-
-	/* When calling huge_encode_dev(),
-	 * use sb->s_bdev->bd_dev when,
-	 *   - CONFIG_ROMFS_ON_BLOCK defined
-	 * use sb->s_dev when,
-	 *   - CONFIG_ROMFS_ON_BLOCK undefined and
-	 *   - CONFIG_ROMFS_ON_MTD defined
-	 * leave id as 0 when,
-	 *   - CONFIG_ROMFS_ON_BLOCK undefined and
-	 *   - CONFIG_ROMFS_ON_MTD undefined
-	 */
-	if (sb->s_bdev)
-		id = huge_encode_dev(sb->s_bdev->bd_dev);
-	else if (sb->s_dev)
-		id = huge_encode_dev(sb->s_dev);
+	u64 id = huge_encode_dev(sb->s_bdev->bd_dev);
 
 	buf->f_type = ROMFS_MAGIC;
 	buf->f_namelen = ROMFS_MAXFN;
@@ -534,11 +540,6 @@ static int romfs_fill_super(struct super_block *sb, void *data, int silent)
 	sb->s_flags |= MS_RDONLY | MS_NOATIME;
 	sb->s_op = &romfs_super_ops;
 
-#ifdef CONFIG_ROMFS_ON_MTD
-	/* Use same dev ID from the underlying mtdblock device */
-	if (sb->s_mtd)
-		sb->s_dev = MKDEV(MTD_BLOCK_MAJOR, sb->s_mtd->index);
-#endif
 	/* read the image superblock and check it */
 	rsb = kmalloc(512, GFP_KERNEL);
 	if (!rsb)
@@ -669,8 +670,8 @@ static int __init init_romfs_fs(void)
 	romfs_inode_cachep =
 		kmem_cache_create("romfs_i",
 				  sizeof(struct romfs_inode_info), 0,
-				  SLAB_RECLAIM_ACCOUNT | SLAB_MEM_SPREAD |
-				  SLAB_ACCOUNT, romfs_i_init_once);
+				  SLAB_RECLAIM_ACCOUNT | SLAB_MEM_SPREAD,
+				  romfs_i_init_once);
 
 	if (!romfs_inode_cachep) {
 		pr_err("Failed to initialise inode cache\n");
